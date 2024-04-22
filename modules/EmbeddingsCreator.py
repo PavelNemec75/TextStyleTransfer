@@ -12,6 +12,7 @@ import chromadb  # noqa: E402
 
 
 class EmbeddingsCreator:
+
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
     model = TFBertModel.from_pretrained("bert-base-uncased")
 
@@ -36,8 +37,8 @@ class EmbeddingsCreator:
             sys.stdout.write(f"\r{len(embeddings_list) * chunk_size}\\{len(items)} ")
             sys.stdout.flush()
 
-            if i >= 3 * chunk_size:
-                break
+            # if i >= 3 * chunk_size:
+            #     break
 
         Helpers.save_to_pickle_file(Path(destination_path),
                                     embeddings_list)
