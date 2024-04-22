@@ -1,24 +1,21 @@
-import pickle
 from pathlib import Path
-from typing import Union
 
 from nltk import sent_tokenize, word_tokenize
 
+from modules.Helpers import Helpers
 
-class TextCleaner:
 
-    settings: dict
-
-    @classmethod
-    def _save_to_pickle_file(cls, path: Path, content: Union[str, list, dict, tuple]) -> None:  # noqa: UP007
-        with Path(path).open("wb") as f:
-            pickle.dump(content, f)
+class TextProcessor:
 
     @classmethod
-    def clean_text(cls) -> None:
+    def process_text_file(cls,
+                          text_file: Path,
+                          word_tokens_file: Path,
+                          sentence_tokens_file: Path,
+                          clean_text_file: Path) -> None:
         text = ""
         try:
-            with Path(cls.settings["DATA_FOLDER"], cls.settings["RAW_TEXT_FILE"]).open("r", encoding="utf-8") as f:
+            with Path(text_file).open("r", encoding="utf-8") as f:
                 text = f.read()
         except FileNotFoundError as e:
             print(e)
@@ -46,13 +43,11 @@ class TextCleaner:
                 cleaned_sentence = (cleaned_sentence[2:])
             cleaned_sentences += cleaned_sentence + "\n"
 
-        cls._save_to_pickle_file(Path(cls.settings["DATA_FOLDER"], cls.settings["SENTENCES_TOKENS_FILE"]),
-                                 cleaned_sentences)
+        Helpers.save_to_pickle_file(clean_text_file, cleaned_sentences)
 
         sentences_list = list(cleaned_sentences.splitlines())
 
-        cls._save_to_pickle_file(Path(cls.settings["DATA_FOLDER"], cls.settings["SENTENCES_TOKENS_FILE"]),
-                                 sentences_list)
+        Helpers.save_to_pickle_file(sentence_tokens_file, sentences_list)
 
         words_list = []
 
@@ -61,5 +56,4 @@ class TextCleaner:
             for word in words:
                 words_list.append(word)  # noqa: PERF402
 
-        cls._save_to_pickle_file(Path(cls.settings["DATA_FOLDER"], cls.settings["WORDS_TOKENS_FILE"]),
-                                 words_list)
+        Helpers.save_to_pickle_file(word_tokens_file, words_list)

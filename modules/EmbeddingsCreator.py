@@ -1,8 +1,10 @@
 import os
+import sys
 from pathlib import Path
 
+from modules.Helpers import Helpers
+
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
-from multiprocessing import Pool  # noqa: E402
 import tensorflow as tf  # noqa: E402
 from transformers import BertTokenizer, TFBertModel  # noqa: E402
 import keras  # noqa: E402
@@ -10,19 +12,45 @@ import chromadb  # noqa: E402
 
 
 class EmbeddingsCreator:
+    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+    model = TFBertModel.from_pretrained("bert-base-uncased")
 
     @classmethod
-    def create_embeddings(cls) -> None:
-        pass
+    def create_embeddings(cls, source_path: Path, destination_path: Path, chunk_size: int) -> None:
 
+        # chroma_client = chromadb.PersistentClient()
+        # collection = chroma_client.get_or_create_collection(name="svejk_words")
 
+        items = Helpers.read_pickle_file(source_path)
 
+        embeddings_list = []
 
+        for i in range(0, len(items), chunk_size):
+            chunk_words = items[i:i + chunk_size]
+            inputs = cls.tokenizer(chunk_words, return_tensors="tf", padding=True, truncation=True)
+            outputs = cls.model(inputs)
+            last_hidden_states = outputs.last_hidden_state
+            embeddings = last_hidden_states.numpy().tolist()
+            embeddings_list.append(embeddings)
 
+            sys.stdout.write(f"\r{len(embeddings_list) * chunk_size}\\{len(items)} ")
+            sys.stdout.flush()
+
+            if i >= 3 * chunk_size:
+                break
+
+        Helpers.save_to_pickle_file(Path(destination_path),
+                                    embeddings_list)
+
+        # inputs = cls.tokenizer(words, return_tensors="tf", padding=True, truncation=True)
+        # outputs = cls.model(inputs)
+        # last_hidden_states = outputs.last_hidden_state
+        # word_embeddings = last_hidden_states.numpy().tolist()
+        # word_embeddings_list = [word_embeddings]
 
 # chroma_client = chromadb.PersistentClient()
 # # chroma_client = chromadb.Client()
-# collection = chroma_client.get_or_create_collection(name="verofi")
+#
 #
 # window_site = 2000
 # step = 200
